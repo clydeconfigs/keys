@@ -1,0 +1,2 @@
+#!/usr/bin/bash
+sed 1d "/tmp/key_database_$USER"

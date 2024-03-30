@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+database="/tmp/key_database_$USER"
+touch "$database"
+chmod 600 "$database"
+echo "title	username	password	totp	note" > "$database"
+scrypt enc --passphrase dev:stdin-once --logN 20 -r8 -p8 "$database" "$HOME"/.key_database.scrypt
