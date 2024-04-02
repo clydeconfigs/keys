@@ -90,6 +90,18 @@ edit() {
 	$EDITOR $database
 	update	
 }
+get() {
+	open || exit
+	database="/tmp/key_database_$USER"
+
+    regex='^[0-9]$'
+    if [[ $1 =~ $regex ]]; then
+    	n=$(($1 + 1))
+		sed -n "$n"p $database | awk '{print $3}'
+	else
+		echo "argument should be a digit"
+	fi
+}
 
 case "$1" in 
 	"create")
@@ -115,6 +127,9 @@ case "$1" in
 		;;
 	"edit")
 		edit
+		;;
+	"get")
+		get $2
 		;;
 	*)
 		echo "not a valid option (create/update/open/close/list/add/remove/edit)"
