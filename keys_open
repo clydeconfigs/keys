@@ -10,7 +10,7 @@ chmod 600 "$database"
 test -e "/tmp/key_pw_$USER" && { 
 	pw=$(cat "/tmp/key_pw_$USER");
 	scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$HOME"/.key_database/key_database "$database" || { 
-		echo "failure"; rm "/tmp/key_pw_$USER"; exit 1; 
+		echo "failure"; rm "/tmp/key_pw_$USER"; rm "$database"; exit 1; 
 	} 
 	exit 0
 }
@@ -22,6 +22,7 @@ chmod 600 "/tmp/key_pw_$USER"
 echo -n "$pw" > "/tmp/key_pw_$USER"
 
 scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$HOME"/.key_database/key_database "$database" || { 
-	echo "failure"; rm "/tmp/key_pw_$USER"; exit 1; 
+	echo "failure"; rm "/tmp/key_pw_$USER"; rm "$database"; exit 1; 
 } 
 
+echo hi
