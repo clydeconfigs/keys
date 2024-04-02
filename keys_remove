@@ -1,4 +1,0 @@
-#!/usr/bin/bash
-
-# this file is not done yet
-# read -> "$input" -> grep -> delete this one ("$output")?

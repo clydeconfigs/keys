@@ -1,3 +1,0 @@
-#!/usr/bin/bash
-/usr/local/bin/keys_open
-cat "/tmp/key_database_$USER" | sed 1d | awk -F $'\t' '{print $1" "$2}' | column -t | nl -w1 -s". "

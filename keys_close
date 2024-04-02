@@ -1,4 +1,0 @@
-#!/usr/bin/bash
-rm "/tmp/key_database_$USER"
-rm "/tmp/key_pw_$USER"
-echo "closed"

@@ -1,5 +1,0 @@
-#!/usr/bin/bash
-/usr/local/bin/keys_open || exit
-database="/tmp/key_database_$USER"
-$EDITOR $database
-/usr/local/bin/keys_update
