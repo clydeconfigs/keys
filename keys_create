@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-test -e "$HOME"/.key_database.scrypt && { echo ""$HOME"/.key_database already exists"; exit 1; }
+test -e "$HOME"/.key_database && { echo ""$HOME"/.key_database already exists"; exit 1; }
 database="/tmp/key_database_$USER"
 touch "$database"
 chmod 600 "$database"
