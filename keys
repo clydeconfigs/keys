@@ -59,7 +59,7 @@ close() {
 }
 list() {
 	open || exit
-	cat "/tmp/key_database_$USER" | sed 1d | awk -F $'\t' '{print $1" "$2}' | column -t | nl -w1 -s". "
+	cat "/tmp/key_database_$USER" | sed 1d | awk -F $'\t' '{print $1" "$2}' | nl -w1 -s". "
 }
 add() {
 	open || exit
@@ -97,7 +97,7 @@ get() {
     regex='^[0-9]$'
     if [[ $1 =~ $regex ]]; then
     	n=$(($1 + 1))
-		sed -n "$n"p $database | awk '{print $3}'
+		sed -n "$n"p $database | awk -F $'\t' '{print $3}'
 	else
 		echo "argument should be a digit"
 	fi
