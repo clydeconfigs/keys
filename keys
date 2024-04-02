@@ -1,30 +1,33 @@
 #!/usr/bin/bash
+
+test -z "$key_database_dir" && export key_database_dir="$HOME/.key_database"
+
 create() {
-	test -e "$HOME"/.key_database/key_database && { echo ""$HOME"/.key_database/key_database already exists"; exit 1; }
+	test -e "$key_database_dir"/key_database && { echo ""$key_database_dir"/key_database already exists"; exit 1; }
 	database="/tmp/key_database_$USER"
 	touch "$database"
 	chmod 600 "$database"
 	echo "title	username	password	totp	note" > "$database"
-	test -e "$HOME"/.key_database || mkdir "$HOME"/.key_database
-	scrypt enc --passphrase dev:stdin-once --logN 18 -r8 -p8 "$database" "$HOME"/.key_database/key_database
-	cd "$HOME"/.key_database
+	test -e "$key_database_dir" || mkdir "$key_database_dir"
+	scrypt enc --passphrase dev:stdin-once --logN 20 -r8 -p8 "$database" "$key_database_dir"/key_database
+	cd "$key_database_dir"
 	git init
 	git add key_database
 	git commit -m "create database"
-	echo "created at "$HOME"/.key_database/key_database"		
+	echo "created at "$key_database_dir"/key_database"		
 }
 update() {
 	open || exit
 	database="/tmp/key_database_$USER"
 	
 	pw=$(cat "/tmp/key_pw_$USER")
-	scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN 18 -r8 -p8 "$database" "$HOME"/.key_database/key_database
-	cd "$HOME"/.key_database
+	scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN 20 -r8 -p8 "$database" "$key_database_dir"/key_database
+	cd "$key_database_dir"
 	git add key_database
 	git commit -m "database edit"
 }
 open() {
-	test -e "$HOME"/.key_database/key_database || { echo ""$HOME"/.key_database/key_database does not exist"; exit 1; }
+	test -e "$key_database_dir"/key_database || { echo ""$key_database_dir"/key_database does not exist"; exit 1; }
 	
 	test -e "/tmp/key_database_$USER" && { echo "open database found"; return; }
 	
@@ -33,7 +36,7 @@ open() {
 	chmod 600 "$database"
 	test -e "/tmp/key_pw_$USER" && { 
 		pw=$(cat "/tmp/key_pw_$USER");
-		scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$HOME"/.key_database/key_database "$database" || { 
+		scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$key_database_dir"/key_database "$database" || { 
 			echo "failure"; rm "/tmp/key_pw_$USER"; rm "$database"; exit 1; 
 		} 
 		return
@@ -45,7 +48,7 @@ open() {
 	chmod 600 "/tmp/key_pw_$USER"
 	echo -n "$pw" > "/tmp/key_pw_$USER"
 	
-	scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$HOME"/.key_database/key_database "$database" || { 
+	scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$key_database_dir"/key_database "$database" || { 
 		echo "failure"; rm "/tmp/key_pw_$USER"; rm "$database"; exit 1; 
 	}
 }
