@@ -1,11 +1,11 @@
 #!/usr/bin/bash
 
 open () {
-	scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$HOME"/.key_database "$database" || exit 1
+	scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$HOME"/.key_database/key_database "$database" || exit 1
 	exit 0
 }
 
-test -e "$HOME"/.key_database || { echo ""$HOME"/.key_database does not exist"; exit 1; }
+test -e "$HOME"/.key_database/key_database || { echo ""$HOME"/.key_database/key_database does not exist"; exit 1; }
 
 test -e "/tmp/key_database_$USER" && { echo "open database found"; exit 0; }
 

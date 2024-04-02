@@ -3,4 +3,7 @@
 database="/tmp/key_database_$USER"
 
 pw=$(cat "/tmp/key_pw_$USER")
-scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN 20 -r8 -p8 "$database" "$HOME"/.key_database
+scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN 20 -r8 -p8 "$database" "$HOME"/.key_database/key_database
+cd "$HOME"/.key_database
+git add key_database
+git commit -m "database edit"
