@@ -1,0 +1,22 @@
+#!/usr/bin/bash
+
+# example usage: 
+# $ bash keys_menu "rofi -dmenu"
+# $ bash keys_menu dmenu
+
+menu=$1
+test -z $1 && exit 1
+
+string=$(keys get $(keys list | sed 1d | $menu | sed 's/\..*//') | sed 1d)
+
+{
+for (( i=0; i<${#string}; i++ )); do
+    char="${string:$i:1}"
+    xdotool type "$char"
+done
+
+notify-send "done typing, you may press enter"
+
+} &
+
+
