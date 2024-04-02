@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
 test -z "$key_database_dir" && export key_database_dir="$HOME/.key_database"
+test -e "/tmp/keys_$USER.lock" && { echo "locked: wait until changes are done or delete /tmp/keys_$USER.lock if something unexpected happened"; exit 1; }
 
 create() {
 	test -e "$key_database_dir"/key_database && { echo ""$key_database_dir"/key_database already exists"; exit 1; }
@@ -21,10 +22,17 @@ update() {
 	database="/tmp/key_database_$USER"
 	
 	pw=$(cat "/tmp/key_pw_$USER")
-	scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN 20 -r8 -p8 "$database" "$key_database_dir"/key_database
-	cd "$key_database_dir"
-	git add key_database
-	git commit -m "database edit"
+	
+	{
+		touch "/tmp/keys_$USER.lock"
+		chmod 600 "/tmp/keys_$USER.lock"
+		echo "doing changes to the database... important: do not delete or change any temporary files now"
+		scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN 20 -r8 -p8 "$database" "$key_database_dir"/key_database >/dev/null 2>&1
+		cd "$key_database_dir"
+		git add key_database
+		git commit -m "database edit" >/dev/null 2>&1
+		rm -f "/tmp/keys_$USER.lock"
+	} &
 }
 open() {
 	test -e "$key_database_dir"/key_database || { echo ""$key_database_dir"/key_database does not exist"; exit 1; }
