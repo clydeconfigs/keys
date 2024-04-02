@@ -1,0 +1,7 @@
+#!/usr/bin/bash
+/usr/local/bin/keys_open || exit
+database="/tmp/key_database_$USER"
+
+echo "jejeje" >> "/tmp/key_database_$USER"
+pw=$(cat "/tmp/key_pw_$USER")
+scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN 18 -r8 -p8 "$database" "$HOME"/.key_database
