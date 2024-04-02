@@ -15,5 +15,5 @@ echo -n "type a note: "
 read note || exit 1
 
 echo -e "$title\t$username\t$password\t$totp\t$note" >> "/tmp/key_database_$USER"
-pw=$(cat "/tmp/key_pw_$USER")
-scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN 20 -r8 -p8 "$database" "$HOME"/.key_database
+
+/usr/local/bin/keys_update
