@@ -1,2 +1,3 @@
 #!/usr/bin/bash
+/usr/local/bin/keys_open
 sed 1d "/tmp/key_database_$USER"

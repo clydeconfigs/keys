@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+database="/tmp/key_database_$USER"
+touch "$database"
+chmod 600 "$database"
+echo "type your password"
+fish -c "read -s pw"
+echo "checking the key..."
+touch "/tmp/key_pw_$USER"
+chmod 600 "/tmp/key_pw_$USER"
+echo "$pw" > "/tmp/key_pw_$USER"
+scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$HOME"/.key_database "$database" || exit 1
