@@ -2,6 +2,18 @@
 /usr/local/bin/keys_open || exit
 database="/tmp/key_database_$USER"
 
-echo "jejeje" >> "/tmp/key_database_$USER"
+echo -n "type the new title: "
+read title || exit 1
+echo -n "type the new username: "
+read username || exit 1
+echo -n "type the new password (empty for autogeneration): "
+read -s password 
+test -z "$password" && password=$(cat /dev/urandom | tr -dc '[:graph:]' | head -c 20)
+echo -n "type the new TOTP key: "
+read totp || exit 1
+echo -n "type a note: "
+read note || exit 1
+
+echo -e "$title\t$username\t$password\t$totp\t$note" >> "/tmp/key_database_$USER"
 pw=$(cat "/tmp/key_pw_$USER")
 scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN 20 -r8 -p8 "$database" "$HOME"/.key_database
