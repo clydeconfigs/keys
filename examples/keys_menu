@@ -16,7 +16,7 @@ login=$(echo "$entry" | awk '{print $3}')
 
 test "$password" == "argument should be a digit" && exit 1
 
-choice=$(echo -e "login+password\npassword\nlogin\ntotp" | $menu)
+choice=$(echo -e "password\nlogin+password\nlogin\ntotp" | $menu)
 
 {
 case $choice in
