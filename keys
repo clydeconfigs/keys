@@ -18,7 +18,7 @@ create() {
 	echo "created at "$key_database_dir"/key_database"		
 }
 update() {
-	open || exit
+	open || { close; exit 1; }
 	database="/tmp/key_database_$USER"
 	
 	pw=$(cat "/tmp/key_pw_$USER")
@@ -61,16 +61,16 @@ open() {
 	}
 }
 close() {
-	rm "/tmp/key_database_$USER"
-	rm "/tmp/key_pw_$USER"
+	rm -f "/tmp/key_database_$USER"
+	rm -f "/tmp/key_pw_$USER"
 	echo "closed"
 }
 list() {
-	open || exit
+	open || { close; exit 1; }
 	cat "/tmp/key_database_$USER" | sed 1d | awk -F $'\t' '{print $1" "$2}' | nl -w1 -s". "
 }
 add() {
-	open || exit
+	open || { close; exit 1; }
 	database="/tmp/key_database_$USER"
 	
 	echo -n "type the new title: "
@@ -93,13 +93,13 @@ remove() {
 	echo "to do"
 }
 edit() {
-	open || exit
+	open || { close; exit 1; }
 	database="/tmp/key_database_$USER"
 	$EDITOR $database
 	update	
 }
 get() {
-	open || exit
+	open || { close; exit 1; }
 	database="/tmp/key_database_$USER"
 
     regex='^[0-9]+$'
@@ -110,6 +110,9 @@ get() {
 		echo "argument should be a digit"
 	fi
 }
+
+test -s "/tmp/key_database_$USER" || close
+test -s "/tmp/key_pw_$USER" || close
 
 case "$1" in 
 	"create")
