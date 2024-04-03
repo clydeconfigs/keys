@@ -27,9 +27,10 @@ update() {
 		touch "/tmp/keys_$USER.lock"
 		chmod 600 "/tmp/keys_$USER.lock"
 		echo "doing changes to the database... important: do not delete or change any temporary files now"
+		cp "$key_database_dir"/key_database "$key_database_dir"/key_database.bkup
 		scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN 20 -r8 -p8 "$database" "$key_database_dir"/key_database >/dev/null 2>&1
 		cd "$key_database_dir"
-		git add key_database
+		git add key_database key_database.bkup
 		git commit -m "database edit" >/dev/null 2>&1
 		rm -f "/tmp/keys_$USER.lock"
 	} &
