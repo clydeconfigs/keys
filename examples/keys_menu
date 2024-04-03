@@ -4,9 +4,10 @@
 # $ bash keys_menu "rofi -dmenu"
 # $ bash keys_menu dmenu
 
+test -e "/tmp/key_database_$USER" || st -e keys open || { keys close; exit 1; }
+
 menu=$1
 test -z $1 && exit 1
-
 
 entry=$(keys list | sed 1d | $menu)
 
