@@ -7,13 +7,47 @@
 menu=$1
 test -z $1 && exit 1
 
-string=$(keys get $(keys list | sed 1d | $menu | sed 's/\..*//') | sed 1d)
+
+entry=$(keys list | sed 1d | $menu)
+
+password=$(keys get $(echo "$entry" | sed 's/\..*//') | sed 1d)
+login=$(echo "$entry" | awk '{print $3}')
+
+test "$password" == "argument should be a digit" && exit 1
+
+choice=$(echo -e "login+password\npassword\nlogin\ntotp" | $menu)
 
 {
-for (( i=0; i<${#string}; i++ )); do
-    char="${string:$i:1}"
-    xdotool type "$char"
-done
+case $choice in
+    "login+password")
+        for (( i=0; i<${#login}; i++ )); do
+            char="${login:$i:1}"
+            xdotool type "$char"
+        done
+        sleep 0.01
+        xdotool key Tab
+        sleep 0.01
+        for (( i=0; i<${#password}; i++ )); do
+            char="${password:$i:1}"
+            xdotool type "$char"
+        done
+        ;;
+    "password")
+        for (( i=0; i<${#password}; i++ )); do
+            char="${password:$i:1}"
+            xdotool type "$char"
+        done
+        ;;
+    "login")
+        for (( i=0; i<${#login}; i++ )); do
+            char="${login:$i:1}"
+            xdotool type "$char"
+        done
+        ;;
+    "totp")
+        echo ""
+        ;;
+esac
 
 notify-send "done typing, you may press enter"
 
