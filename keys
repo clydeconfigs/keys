@@ -102,7 +102,7 @@ get() {
 	open || exit
 	database="/tmp/key_database_$USER"
 
-    regex='^[0-9]$'
+    regex='^[0-9]+$'
     if [[ $1 =~ $regex ]]; then
     	n=$(($1 + 1))
 		sed -n "$n"p $database | awk -F $'\t' '{print $3}'
