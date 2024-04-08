@@ -20,7 +20,7 @@ create() {
 update() {
 	open || { close; exit 1; }
 	database="/tmp/key_database_$USER"
-	
+
 	pw=$(cat "/tmp/key_pw_$USER")
 	
 	{
@@ -43,20 +43,28 @@ open() {
 	database="/tmp/key_database_$USER"
 	touch "$database"
 	chmod 600 "$database"
-	test -e "/tmp/key_pw_$USER" && { 
+	
+	if test -e "/tmp/key_pw_$USER"; then
 		pw=$(cat "/tmp/key_pw_$USER");
 		scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$key_database_dir"/key_database "$database" || { 
 			echo "failure"; rm "/tmp/key_pw_$USER"; rm "$database"; exit 1; 
 		} 
 		return
-	}
-	echo -n "type your password: "
-	read -s pw
-	echo "checking the key..."
-	touch "/tmp/key_pw_$USER"
-	chmod 600 "/tmp/key_pw_$USER"
-	echo -n "$pw" > "/tmp/key_pw_$USER"
+	fi
 	
+	if test -z "$1"; then
+		echo -n "type your password: "
+		read -s pw
+		echo "checking the key..."
+		touch "/tmp/key_pw_$USER"
+		chmod 600 "/tmp/key_pw_$USER"
+		echo -n "$pw" > "/tmp/key_pw_$USER"
+	else
+		touch "/tmp/key_pw_$USER"
+		chmod 600 "/tmp/key_pw_$USER"
+		echo -n "$(cat $1)" > "/tmp/key_pw_$USER"
+	fi
+
 	scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$key_database_dir"/key_database "$database" || { 
 		echo "failure"; rm "/tmp/key_pw_$USER"; rm "$database"; exit 1; 
 	}
@@ -68,7 +76,7 @@ close() {
 }
 list() {
 	open || { close; exit 1; }
-	cat "/tmp/key_database_$USER" | sed 1d | awk -F $'\t' '{print $1" "$2}' | nl -w1 -s". "
+	cat "/tmp/key_database_$USER" | sed 1d | awk -F $'\t' '{print $1" "$2" "$5}' | nl -w1 -s". "
 }
 add() {
 	open || { close; exit 1; }
@@ -123,7 +131,7 @@ case "$1" in
 		update
 		;;
 	"open")
-		open
+		open "$2"
 		;;
 	"close")
 		close
