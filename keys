@@ -99,13 +99,25 @@ add() {
 	update
 }
 remove() {
-	echo "to do"
-}
-edit() {
 	open || { close; exit 1; }
 	database="/tmp/key_database_$USER"
-	$EDITOR $database
-	update	
+
+    regex='^[0-9]+$'
+    if [[ $1 =~ $regex ]]; then
+    	n=$(($1 + 1))
+		bkup=$(sed -n "$n"p $database)
+		name=$(sed -n "$n"p $database | awk -F $'\t' '{print $1" "$2}' | tr -d '\n')
+    	read -p "are you sure you want to delete '$name'?" || exit 1
+		install -m 600 /dev/null "/tmp/keys_deleted_entry_$USER"
+		echo "$bkup" >> "/tmp/keys_deleted_entry_$USER"
+		echo "deleted entry '$name', backup in /tmp/keys_deleted_entry_$USER"
+		sed -i "$n"d $database
+	else
+		echo "argument should be a digit"
+		exit 1
+	fi
+
+	update
 }
 get() {
 	open >/dev/null 2>&1 || { close; exit 1; }
@@ -118,6 +130,12 @@ get() {
 	else
 		echo "argument should be a digit"
 	fi
+}
+edit() {
+	open || { close; exit 1; }
+	database="/tmp/key_database_$USER"
+	$EDITOR $database
+	update	
 }
 
 test -s "/tmp/key_database_$USER" || close
@@ -143,7 +161,7 @@ case "$1" in
 		add
 		;;
 	"remove")
-		remove
+		remove $2
 		;;
 	"edit")
 		edit
