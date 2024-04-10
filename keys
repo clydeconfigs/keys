@@ -131,6 +131,18 @@ get() {
 		echo "argument should be a digit"
 	fi
 }
+totp() {
+	open >/dev/null 2>&1 || { close; exit 1; }
+	database="/tmp/key_database_$USER"
+
+    regex='^[0-9]+$'
+    if [[ $1 =~ $regex ]]; then
+    	n=$(($1 + 1))
+		oathtool -b --totp $(sed -n "$n"p $database | awk -F $'\t' '{print $4}' | tr -d '\n')
+	else
+		echo "argument should be a digit"
+	fi
+}
 edit() {
 	open || { close; exit 1; }
 	database="/tmp/key_database_$USER"
@@ -168,6 +180,9 @@ case "$1" in
 		;;
 	"get")
 		get $2
+		;;
+	"totp")
+		totp $2
 		;;
 	*)
 		echo "not a valid option (create/update/open/close/list/add/remove/edit)"

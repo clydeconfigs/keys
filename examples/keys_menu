@@ -17,8 +17,10 @@ fi
 
 entry=$(keys list | sed 1d | $menu)
 
-password=$(keys get $(echo "$entry" | sed 's/\..*//'))
+kn=$(echo "$entry" | sed 's/\..*//')
+password=$(keys get $kn)
 login=$(echo "$entry" | awk '{print $3}')
+totp=$(keys totp $kn)
 
 test "$password" == "argument should be a digit" && exit 1
 
@@ -52,7 +54,10 @@ case $choice in
         done
         ;;
     "totp")
-        echo ""
+        for (( i=0; i<${#totp}; i++ )); do
+            char="${totp:$i:1}"
+            xdotool type "$char"
+        done
         ;;
 esac
 
