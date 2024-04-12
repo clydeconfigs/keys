@@ -9,6 +9,7 @@ test -z $1 && exit 1
 
 if ! test -e "/tmp/key_database_$USER"; then
     database_password=$(rofi -dmenu -password -p "enter your database's master key")
+    test -z "$database_password" && exit 1
     touch "/tmp/keys_menu_pw_$USER"
     chmod 600 "/tmp/keys_menu_pw_$USER"
     echo "$database_password" > "/tmp/keys_menu_pw_$USER"
