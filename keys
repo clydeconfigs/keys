@@ -1,21 +1,19 @@
 #!/usr/bin/bash
 
-test -z "$key_database_dir" && export key_database_dir="$HOME/.key_database"
-test -e "/tmp/keys_$USER.lock" && { echo "locked: wait until changes are done or delete /tmp/keys_$USER.lock if something unexpected happened"; exit 1; }
-
 create() {
-	test -e "$key_database_dir"/key_database && { echo ""$key_database_dir"/key_database already exists"; exit 1; }
+	test -e "$KEYS_DIR"/key_database && { echo ""$KEYS_DIR"/key_database already exists"; exit 1; }
 	database="/tmp/key_database_$USER"
 	touch "$database"
 	chmod 600 "$database"
+	echo -e "N=20\nr=8\np=8" > "$KEYS_DIR"/keys.config
 	echo "title	username	password	totp	note" > "$database"
-	test -e "$key_database_dir" || mkdir "$key_database_dir"
-	scrypt enc --passphrase dev:stdin-once --logN 20 -r8 -p8 "$database" "$key_database_dir"/key_database
-	cd "$key_database_dir"
+	test -e "$KEYS_DIR" || mkdir "$KEYS_DIR"
+	scrypt enc --passphrase dev:stdin-once --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database
+	cd "$KEYS_DIR"
 	git init
 	git add key_database
 	git commit -m "create database"
-	echo "created at "$key_database_dir"/key_database"		
+	echo "created at "$KEYS_DIR"/key_database"		
 }
 update() {
 	open || { close; exit 1; }
@@ -29,22 +27,22 @@ update() {
 		echo "doing changes to the database... important: do not delete or change any temporary files now"
 
 		# create backup in case something fails before completing scrypt operation
-		cp "$key_database_dir"/key_database "$key_database_dir"/key_database.bkup
+		cp "$KEYS_DIR"/key_database "$KEYS_DIR"/key_database.bkup
 		
 		{
-			scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN 20 -r8 -p8 "$database" "$key_database_dir"/key_database
-			cd "$key_database_dir"
+			scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database
+			cd "$KEYS_DIR"
 			git add key_database
 			git commit -m "database update"
-		} >/dev/null 2>&1 && rm "$key_database_dir"/key_database.bkup
+		} >/dev/null 2>&1 && rm "$KEYS_DIR"/key_database.bkup
 
 		rm -f "/tmp/keys_$USER.lock"
 	} &
 }
 open() {
-	test -e "$key_database_dir"/key_database || { echo ""$key_database_dir"/key_database does not exist"; exit 1; }
+	test -e "$KEYS_DIR"/key_database || { echo ""$KEYS_DIR"/key_database does not exist"; exit 1; }
 	
-	test -e "/tmp/key_database_$USER" && { echo "open database found"; return; }
+	test -e "/tmp/key_database_$USER" && { echo "open database found"; return 0; }
 	
 	database="/tmp/key_database_$USER"
 	touch "$database"
@@ -52,10 +50,10 @@ open() {
 	
 	if test -e "/tmp/key_pw_$USER"; then
 		pw=$(cat "/tmp/key_pw_$USER");
-		scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$key_database_dir"/key_database "$database" || { 
+		scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$KEYS_DIR"/key_database "$database" || { 
 			echo "failure"; rm "/tmp/key_pw_$USER"; rm "$database"; exit 1; 
 		} 
-		return
+		return 0
 	fi
 	
 	if test -z "$1"; then
@@ -71,14 +69,15 @@ open() {
 		echo -n "$(cat $1)" > "/tmp/key_pw_$USER"
 	fi
 
-	scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$key_database_dir"/key_database "$database" || { 
+	scrypt dec --passphrase file:"/tmp/key_pw_$USER" "$KEYS_DIR"/key_database "$database" || { 
 		echo "failure"; rm "/tmp/key_pw_$USER"; rm "$database"; exit 1; 
 	}
 }
 close() {
-	rm -f "/tmp/key_database_$USER"
-	rm -f "/tmp/key_pw_$USER"
-	echo "closed"
+	{ 
+		rm -f "/tmp/key_database_$USER"
+		rm -f "/tmp/key_pw_$USER"
+	} && return 0
 }
 list() {
 	open || { close; exit 1; }
@@ -113,7 +112,7 @@ remove() {
     	n=$(($1 + 1))
 		bkup=$(sed -n "$n"p $database)
 		name=$(sed -n "$n"p $database | awk -F $'\t' '{print $1" "$2}' | tr -d '\n')
-    	read -p "are you sure you want to delete '$name'?" || exit 1
+    	read -p "(important: press Ctrl+C to cancel) are you sure you want to delete '$name'?" || exit 1
 		install -m 600 /dev/null "/tmp/keys_deleted_entry_$USER"
 		echo "$bkup" >> "/tmp/keys_deleted_entry_$USER"
 		echo "deleted entry '$name', backup in /tmp/keys_deleted_entry_$USER"
@@ -155,16 +154,20 @@ edit() {
 	$EDITOR $database
 	update	
 }
+unlock() {
+	test -e "/tmp/keys_$USER.lock" && { echo "locked: wait until changes are done or delete /tmp/keys_$USER.lock if something unexpected happened"; exit 1; }
+}
 
 test -s "/tmp/key_database_$USER" || close
 test -s "/tmp/key_pw_$USER" || close
 
+test -z "$KEYS_DIR" && export KEYS_DIR="$HOME/.key_database"
+
+source "$KEYS_DIR"/keys.config
+
 case "$1" in 
 	"create")
 		create
-		;;
-	"update")
-		update
 		;;
 	"open")
 		open "$2"
@@ -176,12 +179,15 @@ case "$1" in
 		list
 		;;
 	"add")
+		unlock
 		add
 		;;
 	"remove")
+		unlock
 		remove $2
 		;;
 	"edit")
+		unlock
 		edit
 		;;
 	"get")
