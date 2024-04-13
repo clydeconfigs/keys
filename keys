@@ -5,13 +5,17 @@ create() {
 	database="/tmp/key_database_$USER"
 	touch "$database"
 	chmod 600 "$database"
-	echo -e "N=20\nr=8\np=8" > "$KEYS_DIR"/keys.config
 	echo "title	username	password	totp	note" > "$database"
 	test -e "$KEYS_DIR" || mkdir "$KEYS_DIR"
+	echo -e "N=20\nr=8\np=8" > "$KEYS_DIR"/keys.config
+	source "$KEYS_DIR"/keys.config
+
+	# this command should repeate until successful, may add later
 	scrypt enc --passphrase dev:stdin-once --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database
+	
 	cd "$KEYS_DIR"
 	git init
-	git add key_database
+	git add key_database keys.config
 	git commit -m "create database"
 	echo "created at "$KEYS_DIR"/key_database"		
 }
@@ -163,7 +167,7 @@ test -s "/tmp/key_pw_$USER" || close
 
 test -z "$KEYS_DIR" && export KEYS_DIR="$HOME/.key_database"
 
-source "$KEYS_DIR"/keys.config
+test "$1" == "create" || source "$KEYS_DIR"/keys.config
 
 case "$1" in 
 	"create")
