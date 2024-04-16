@@ -1,5 +1,10 @@
 #!/usr/bin/bash
 
+#
+# CC BY-NC-SA 4.0 Deed 
+# keys-menu, a work by clyde
+#
+
 # example usage: 
 # $ bash keys_menu "rofi -dmenu"
 # $ bash keys_menu dmenu

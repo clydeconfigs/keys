@@ -1,5 +1,10 @@
 #!/usr/bin/bash
 
+#
+# CC BY-NC-SA 4.0 Deed 
+# keys, a work by clyde
+#
+
 create() {
 	test -e "$KEYS_DIR"/key_database && { echo ""$KEYS_DIR"/key_database already exists"; exit 1; }
 	database="/tmp/key_database_$USER"
@@ -7,11 +12,38 @@ create() {
 	chmod 600 "$database"
 	echo "title	username	password	totp	note" > "$database"
 	test -e "$KEYS_DIR" || mkdir "$KEYS_DIR"
-	echo -e "N=20\nr=8\np=8" > "$KEYS_DIR"/keys.config
+
+	echo "how strong do you want your KDF settings? ([a]/b/c/d)"
+	echo "a) weak ~1 seconds (20/4/2)"
+	echo "b) medium ~3 seconds (20/4/4)"
+	echo "c) hard ~7 seconds (needs more than 4GB RAM) (22/4/2)"
+	echo "d) compatible ~13 seconds (works in 4GB RAM computers) (20/8/8)"
+
+	read abcd
+
+	case $abcd in
+	    a)
+	        echo -e "N=20\nr=4\np=2" > "$KEYS_DIR"/keys.config
+	        ;;
+	    b)
+	        echo -e "N=20\nr=4\np=4" > "$KEYS_DIR"/keys.config
+	        ;;
+	    c)
+	        echo -e "N=22\nr=4\np=2" > "$KEYS_DIR"/keys.config
+	        ;;
+	    d)
+	        echo -e "N=20\nr=8\np=8" > "$KEYS_DIR"/keys.config
+	        ;;
+	    *)
+	        echo -e "N=20\nr=4\np=2" > "$KEYS_DIR"/keys.config
+	        ;;
+	esac
+	
 	source "$KEYS_DIR"/keys.config
 
-	# this command should repeate until successful, may add later
-	scrypt enc --passphrase dev:stdin-once --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database
+	until scrypt enc --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database; do
+		sleep 0.1
+	done
 	
 	cd "$KEYS_DIR"
 	git init
@@ -30,21 +62,27 @@ update() {
 		chmod 600 "/tmp/keys_$USER.lock"
 		echo "doing changes to the database... important: do not delete or change any temporary files now"
 
-		# create backup in case something fails before completing scrypt operation
+		# create backup in case something fails
 		cp "$KEYS_DIR"/key_database "$KEYS_DIR"/key_database.bkup
 		
-		{
-			scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database
-			cd "$KEYS_DIR"
-			git add key_database
-			git commit -m "database update"
-		} >/dev/null 2>&1 && rm "$KEYS_DIR"/key_database.bkup
+		scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database >/dev/null 2>&1 && rm "$KEYS_DIR"/key_database.bkup
 
+		cd "$KEYS_DIR"
+		git add key_database keys.config
+		git commit -m "database update"
+		
 		rm -f "/tmp/keys_$USER.lock"
 	} &
 }
 open() {
-	test -e "$KEYS_DIR"/key_database || { echo ""$KEYS_DIR"/key_database does not exist"; exit 1; }
+	test -s "$KEYS_DIR"/key_database || { 
+		if test -e "$KEYS_DIR"/key_database.bkup; then
+			cp "$KEYS_DIR"/key_database.bkup "$KEYS_DIR"/key_database
+			echo "\033[0;32mfound a backup without the original database... we restored it\033[0m"
+		else
+			echo ""$KEYS_DIR"/key_database does not exist"; exit 1;
+		fi
+	}
 	
 	test -e "/tmp/key_database_$USER" && { echo "open database found"; return 0; }
 	
@@ -201,6 +239,7 @@ case "$1" in
 		totp $2
 		;;
 	*)
-		echo "not a valid option (create/update/open/close/list/add/remove/edit)"
+		echo "not a valid option (get/create/open/close/list/add/remove/edit)"
+		echo "be careful not displaying your logins to anyone when using list/edit/get"
 		;;
 esac
