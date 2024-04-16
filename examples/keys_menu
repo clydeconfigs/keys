@@ -12,13 +12,28 @@
 menu=$1
 test -z $1 && exit 1
 
+main_menu=$(echo -e "try+open\nclose+open" | $menu -p "careful: this will display your logins! select any to continue" -lines 0 || exit 1)
+
+case $main_menu in
+    "try+open")
+        return;;
+    "close+open")
+        keys close;;
+esac
+
 if ! test -e "/tmp/key_database_$USER"; then
     database_password=$(rofi -dmenu -password -p "enter your database's master key")
     test -z "$database_password" && exit 1
+
+    notify-send "trying to unlock... wait until this is over. if any error, close+open"
     touch "/tmp/keys_menu_pw_$USER"
     chmod 600 "/tmp/keys_menu_pw_$USER"
     echo "$database_password" > "/tmp/keys_menu_pw_$USER"
-    keys open "/tmp/keys_menu_pw_$USER" || { keys close; exit 1; }
+    keys open "/tmp/keys_menu_pw_$USER" || { 
+        notify-send "failure unlocking database, the password is wrong?"
+        keys close
+        exit 1
+    }
 fi
 
 entry=$(keys list | sed 1d | $menu)
