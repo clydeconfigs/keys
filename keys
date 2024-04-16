@@ -38,6 +38,8 @@ create() {
 	        echo -e "N=20\nr=4\np=2" > "$KEYS_DIR"/keys.config
 	        ;;
 	esac
+
+	echo -en "\nc=20" >> "$KEYS_DIR"/keys.config
 	
 	source "$KEYS_DIR"/keys.config
 
@@ -131,11 +133,12 @@ add() {
 	
 	echo -n "type the new title: "
 	read title || exit 1
-	echo -n "type the new username: "
+	echo -n "type the new username [press enter for random]: "
 	read username || exit 1
-	echo -n "type the new password (empty for autogeneration): "
+	echo -n "type the new password [press for random]: "
 	read -s password 
-	test -z "$password" && { echo ""; password=$(cat /dev/urandom | tr -dc '[:graph:]' | head -c 20); }
+	test -z "$password" && { echo; password=$(cat /dev/urandom | tr -dc '[:graph:]' | head -c 20); }
+	test -z "$username" && { echo; username=$(awk 'BEGIN{srand(); split("bdfghjklmnpqrstvyz",consonants,""); split("aeiou",vowels,""); for(i=1;i<=3;i++) printf "%s%s",consonants[int(rand()*20)],vowels[int(rand()*5)]; for(i=1;i<=3;i++) printf "%s", int(rand()*10)}'); }
 	echo -n "type the new TOTP key: "
 	read totp || exit 1
 	echo -n "type a note: "
@@ -238,8 +241,17 @@ case "$1" in
 	"totp")
 		totp $2
 		;;
+	"copy")
+		{ 
+			echo -n $(get $2) | xclip -sel c
+			echo "clearing clipboard in $c"
+			sleep $c
+			echo "fool" | xclip -sel c
+		} &
+		
+		;;
 	*)
-		echo "not a valid option (get/create/open/close/list/add/remove/edit)"
+		echo "not a valid option (copy/get/create/open/close/list/add/remove/edit)"
 		echo "be careful not displaying your logins to anyone when using list/edit/get"
 		;;
 esac
