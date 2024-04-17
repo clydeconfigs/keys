@@ -57,15 +57,15 @@ update() {
 	database="/tmp/key_database_$USER"
 
 	pw=$(cat "/tmp/key_pw_$USER")
-	
-	{
-		touch "/tmp/keys_$USER.lock"
-		chmod 600 "/tmp/keys_$USER.lock"
-		echo "doing changes to the database... important: do not delete or change any temporary files now"
 
-		# create backup in case something fails
-		cp "$KEYS_DIR"/key_database "$KEYS_DIR"/key_database.bkup
-		
+	touch "/tmp/keys_$USER.lock"
+	chmod 600 "/tmp/keys_$USER.lock"
+	echo "doing changes to the database... important: do not delete or change any temporary files now"
+
+	# create backup in case something fails
+	cp "$KEYS_DIR"/key_database "$KEYS_DIR"/key_database.bkup
+
+	{		
 		scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database >/dev/null 2>&1 && rm "$KEYS_DIR"/key_database.bkup
 
 		cd "$KEYS_DIR"
@@ -73,7 +73,7 @@ update() {
 		git commit -m "database update"
 		
 		rm -f "/tmp/keys_$USER.lock"
-	} &
+	} 1> /dev/null &
 }
 changemasterkey() {
 	open || { close; exit 1; }
@@ -90,15 +90,15 @@ changemasterkey() {
 	echo -n "$newmasterkey" > "/tmp/key_pw_$USER"
 
 	pw=$(cat "/tmp/key_pw_$USER")
-	
-	{
-		touch "/tmp/keys_$USER.lock"
-		chmod 600 "/tmp/keys_$USER.lock"
-		echo "doing changes to the database... important: do not delete or change any temporary files now"
 
-		# create backup in case something fails
-		cp "$KEYS_DIR"/key_database "$KEYS_DIR"/key_database.bkup
-		
+	touch "/tmp/keys_$USER.lock"
+	chmod 600 "/tmp/keys_$USER.lock"
+	echo "doing changes to the database... important: do not delete or change any temporary files now"
+
+	# create backup in case something fails
+	cp "$KEYS_DIR"/key_database "$KEYS_DIR"/key_database.bkup
+
+	{		
 		scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database >/dev/null 2>&1 && rm "$KEYS_DIR"/key_database.bkup
 
 		cd "$KEYS_DIR"
@@ -106,7 +106,7 @@ changemasterkey() {
 		git commit -m "database master key change"
 		
 		rm -f "/tmp/keys_$USER.lock"
-	} &
+	} 1> /dev/null &
 }
 open() {
 	test -s "$KEYS_DIR"/key_database || {
@@ -235,6 +235,29 @@ get() {
 		echo "argument should be a digit"
 	fi
 }
+copy() {
+    regex='^[0-9]+$'
+   	if [[ $1 =~ $regex ]]; then
+		echo -n $(get $2) | xclip -sel c
+		echo "clearing clipboard in $c"
+
+		{ 
+			sleep $c
+			echo "fool" | xclip -sel c
+		} &
+	else
+		database="/tmp/key_database_$USER"
+		found="$(grep "$1" "$database" | head -n1)"
+		name=$(echo -e "$found" | awk -F '\t' '{print $1"/"$2}')
+		echo -e "$name copied, clearing clipboard in $c"
+		echo -e "$found" | awk -F '\t' '{print $3}' | xclip -sel c
+
+		{ 
+			sleep $c
+			echo "fool" | xclip -sel c
+		} &
+	fi
+}
 totp() {
 	open >/dev/null 2>&1 || { close; exit 1; }
 	database="/tmp/key_database_$USER"
@@ -289,13 +312,7 @@ case "$1" in
 	"totp")
 		totp $2;;
 	"copy")
-		{ 
-			echo -n $(get $2) | xclip -sel c
-			echo "clearing clipboard in $c"
-			sleep $c
-			echo "fool" | xclip -sel c
-		} &
-		;;
+		copy "$2";;
 	*)
 		echo "not a valid option (copy/get/create/open/close/list/add/remove/edit)"
 		echo "be careful not displaying your logins to anyone when using list/edit/get";;
