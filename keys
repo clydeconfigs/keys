@@ -160,7 +160,13 @@ close() {
 }
 list() {
 	open || { close; exit 1; }
-	cat "/tmp/key_database_$USER" | sed 1d | awk -F $'\t' '{print $1" "$2" "$5}' | nl -w1 -s". "
+	if [[ $1 == *"s"* ]]; then
+	    cat "/tmp/key_database_$USER" | sed 1d | awk -F $'\t' '{print $1}' | nl -w1 -s". "
+	elif [[ $1 == *"l"* ]]; then
+	    cat "/tmp/key_database_$USER" | sed 1d | awk -F $'\t' '{print $1" "$2}' | nl -w1 -s". "
+	else
+	    cat "/tmp/key_database_$USER" | sed 1d | awk -F $'\t' '{print $1" "$2" "$5}' | nl -w1 -s". "
+	fi
 }
 add() {
 	open || { close; exit 1; }
@@ -255,7 +261,7 @@ case "$1" in
 	"close")
 		close;;
 	"list")
-		list;;
+		list "$2";;
 	"add")
 		unlock
 		add;;
