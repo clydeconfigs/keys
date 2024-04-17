@@ -13,32 +13,31 @@ create() {
 	echo "title	username	password	totp	note" > "$database"
 	test -e "$KEYS_DIR" || mkdir "$KEYS_DIR"
 
-	echo "how strong do you want your KDF settings? ([a]/b/c/d)"
-	echo "a) weak ~1 seconds (20/4/2)"
-	echo "b) medium ~3 seconds (20/4/4)"
-	echo "c) hard ~7 seconds (needs more than 4GB RAM) (22/4/2)"
-	echo "d) compatible ~13 seconds (works in 4GB RAM computers) (20/8/8)"
+	echo "how strong do you want your scrypt KDF settings? ([a]/b/c/d)"
+	echo "a) weak ~1 seconds / 0.5GB RAM (19/8/1)"
+	echo "b) medium ~2 seconds / 1GB RAM (20/8/1)"
+	echo "c) hard ~4 seconds / 2GB RAM (21/8/1)"
+	echo "d) pro ~8 seconds / 4GB RAM (22/8/1)"
+	echo "e) max ~16 seconds / 8GB RAM (23/8/1)"
 
 	read abcd
 
 	case $abcd in
 	    a)
-	        echo -e "N=20\nr=4\np=2" > "$KEYS_DIR"/keys.config
-	        ;;
+	        config="N=19\nr=8\np=1";;
 	    b)
-	        echo -e "N=20\nr=4\np=4" > "$KEYS_DIR"/keys.config
-	        ;;
+	        config="N=20\nr=8\np=1";;
 	    c)
-	        echo -e "N=22\nr=4\np=2" > "$KEYS_DIR"/keys.config
-	        ;;
+	        config="N=21\nr=8\np=1";;
 	    d)
-	        echo -e "N=20\nr=8\np=8" > "$KEYS_DIR"/keys.config
-	        ;;
+	        config="N=22\nr=8\np=1";;
+	    e)
+	        config="N=23\nr=8\np=1";;
 	    *)
-	        echo -e "N=20\nr=4\np=2" > "$KEYS_DIR"/keys.config
-	        ;;
+	        config="N=19\nr=8\np=1";;
 	esac
-
+	
+	echo -e $config > "$KEYS_DIR"/keys.config
 	echo -en "\nc=20" >> "$KEYS_DIR"/keys.config
 	
 	source "$KEYS_DIR"/keys.config
@@ -230,7 +229,7 @@ totp() {
 	fi
 }
 edit() {
-	open || { close; exit 1; }
+	open >/dev/null 2>&1 || { close; exit 1; }
 	database="/tmp/key_database_$USER"
 	$EDITOR $database
 	update	
@@ -248,38 +247,28 @@ test "$1" == "create" || source "$KEYS_DIR"/keys.config
 
 case "$1" in 
 	"create")
-		create
-		;;
+		create;;
 	"changemasterkey")
-		changemasterkey
-		;;
+		changemasterkey;;
 	"open")
-		open "$2"
-		;;
+		open "$2";;
 	"close")
-		close
-		;;
+		close;;
 	"list")
-		list
-		;;
+		list;;
 	"add")
 		unlock
-		add
-		;;
+		add;;
 	"remove")
 		unlock
-		remove $2
-		;;
+		remove $2;;
 	"edit")
 		unlock
-		edit
-		;;
+		edit;;
 	"get")
-		get $2
-		;;
+		get $2;;
 	"totp")
-		totp $2
-		;;
+		totp $2;;
 	"copy")
 		{ 
 			echo -n $(get $2) | xclip -sel c
@@ -287,10 +276,8 @@ case "$1" in
 			sleep $c
 			echo "fool" | xclip -sel c
 		} &
-		
 		;;
 	*)
 		echo "not a valid option (copy/get/create/open/close/list/add/remove/edit)"
-		echo "be careful not displaying your logins to anyone when using list/edit/get"
-		;;
+		echo "be careful not displaying your logins to anyone when using list/edit/get";;
 esac
