@@ -19,6 +19,8 @@ case $main_menu in
         return;;
     "close+open")
         keys close;;
+    *)
+        exit 1;;
 esac
 
 if ! test -e "/tmp/key_database_$USER"; then

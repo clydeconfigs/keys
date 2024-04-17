@@ -76,11 +76,47 @@ update() {
 		rm -f "/tmp/keys_$USER.lock"
 	} &
 }
+changemasterkey() {
+	open || { close; exit 1; }
+	database="/tmp/key_database_$USER"
+
+	echo -n "enter new master key: "
+	read -s newmasterkey
+	echo
+	echo -n "repeat it: "
+	read -s newmasterkey2 
+
+	[[ "$newmasterkey" == "$newmasterkey2" ]] || { echo "the keys don't match"; exit 1; }
+
+	echo -n "$newmasterkey" > "/tmp/key_pw_$USER"
+
+	pw=$(cat "/tmp/key_pw_$USER")
+	
+	{
+		touch "/tmp/keys_$USER.lock"
+		chmod 600 "/tmp/keys_$USER.lock"
+		echo "doing changes to the database... important: do not delete or change any temporary files now"
+
+		# create backup in case something fails
+		cp "$KEYS_DIR"/key_database "$KEYS_DIR"/key_database.bkup
+		
+		scrypt enc --passphrase file:"/tmp/key_pw_$USER" --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database >/dev/null 2>&1 && rm "$KEYS_DIR"/key_database.bkup
+
+		cd "$KEYS_DIR"
+		git add key_database keys.config
+		git commit -m "database master key change"
+		
+		rm -f "/tmp/keys_$USER.lock"
+	} &
+}
 open() {
-	test -s "$KEYS_DIR"/key_database || { 
-		if test -e "$KEYS_DIR"/key_database.bkup; then
+	test -s "$KEYS_DIR"/key_database || {
+
+		if test -e "/tmp/keys_$USER.lock"; then
+			echo -e "\033[33mwarning: a lock was found, but no database. this may be confusing, but it's OK. this is common after using 'list' after a database edit. if this persists, try:\n1) waiting for an edit to finish, and try again\n2) delete /tmp/keys_$USER.lock if you are sure there is no change in course\033[0m" 
+		elif test -e "$KEYS_DIR"/key_database.bkup; then
 			cp "$KEYS_DIR"/key_database.bkup "$KEYS_DIR"/key_database
-			echo "\033[0;32mfound a backup without the original database... we restored it\033[0m"
+			echo -e "\033[0;32mfound a backup without the original database... we restored it\033[0m"
 		else
 			echo ""$KEYS_DIR"/key_database does not exist"; exit 1;
 		fi
@@ -138,7 +174,7 @@ add() {
 	echo -n "type the new password [press for random]: "
 	read -s password 
 	test -z "$password" && { echo; password=$(cat /dev/urandom | tr -dc '[:graph:]' | head -c 20); }
-	test -z "$username" && { echo; username=$(awk 'BEGIN{srand(); split("bdfghjklmnpqrstvyz",consonants,""); split("aeiou",vowels,""); for(i=1;i<=3;i++) printf "%s%s",consonants[int(rand()*20)],vowels[int(rand()*5)]; for(i=1;i<=3;i++) printf "%s", int(rand()*10)}'); }
+	test -z "$username" && { echo; username=$(awk 'BEGIN{srand(); split("bdfghjklmnpqrstvyz",consonants,""); split("aeiou",vowels,""); for(i=1;i<=3;i++) printf "%s%s",consonants[int(rand()*20)],vowels[int(rand()*5)]; for(i=1;i<=2;i++) printf "%s", int(rand()*10)}'); }
 	echo -n "type the new TOTP key: "
 	read totp || exit 1
 	echo -n "type a note: "
@@ -213,6 +249,9 @@ test "$1" == "create" || source "$KEYS_DIR"/keys.config
 case "$1" in 
 	"create")
 		create
+		;;
+	"changemasterkey")
+		changemasterkey
 		;;
 	"open")
 		open "$2"
