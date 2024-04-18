@@ -38,7 +38,7 @@ if ! test -e "/tmp/key_database_$USER"; then
     }
 fi
 
-entry=$(keys list | sed 1d | $menu)
+entry=$(keys list -l | sed 1d | $menu)
 
 kn=$(echo "$entry" | sed 's/\..*//')
 password=$(keys get $kn)
@@ -47,7 +47,7 @@ totp=$(keys totp $kn)
 
 test "$password" == "argument should be a digit" && exit 1
 
-choice=$(echo -e "password\nlogin+password\nlogin\ntotp" | $menu)
+choice=$(echo -e "password\nlogin+password\nlogin\ntotp" | $menu) || exit 1
 
 {
 case $choice in
