@@ -159,27 +159,28 @@ close() {
 	} && return 0
 }
 list() {
-	open || { close; exit 1; }
-	
-	if [[ $1 == *"n"* ]]; then
-	    hide_col5=true
-	fi
-	
-	if [[ $1 == *"l"* ]]; then
-	    hide_col2=true
-	fi
-	
-	awk -F'\t' '{
-	    if (hide_col2 && hide_col5) {
-	        print $1
-	    } else if (hide_col2) {
-	        print $1, $5
-	    } else if (hide_col5) {
-	        print $1, $2
-	    } else {
-	        print $1, $2, $5
-	    }
-	}' hide_col2="$hide_col2" hide_col5="$hide_col5" "/tmp/key_database_$USER" | sed 1d | nl -w1 -s". "
+    open || { close; exit 1; }
+
+    hide_col2=true
+    hide_col5=true
+
+    if [[ $1 == *"n"* ]]; then
+        hide_col2=false
+    fi
+
+    if [[ $1 == *"l"* ]]; then
+        hide_col5=false
+    fi
+
+    if [[ "$hide_col2" == "true" && "$hide_col5" == "true" ]]; then
+        awk -F $'\t' '{print $1}' "/tmp/key_database_$USER" 
+    elif [[ "$hide_col2" == "false" && "$hide_col5" == "true" ]]; then
+        awk -F $'\t' '{print $1" "$5}' "/tmp/key_database_$USER" 
+    elif [[ "$hide_col2" == "true" && "$hide_col5" == "false" ]]; then
+        awk -F $'\t' '{print $1" "$2}' "/tmp/key_database_$USER" 
+    else
+        awk -F $'\t' '{print $1" "$2" "$5}' "/tmp/key_database_$USER" 
+    fi | sed 1d | nl -w1 -s". "
 }
 add() {
 	open || { close; exit 1; }
