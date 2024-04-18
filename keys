@@ -121,7 +121,7 @@ open() {
 		fi
 	}
 	
-	test -e "/tmp/key_database_$USER" && { echo "open database found"; return 0; }
+	test -e "/tmp/key_database_$USER" && { return 0; }
 	
 	database="/tmp/key_database_$USER"
 	touch "$database"
