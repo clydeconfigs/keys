@@ -23,15 +23,24 @@ case $main_menu in
         exit 1;;
 esac
 
-if ! test -e "/tmp/key_database_$USER"; then
+# this should be done in keys itself, but since it's not open yet, we have to do it ourselves
+dbid=$(echo "$KEYS_DIR" | cksum | cut -d" " -f 1)
+mkdir /tmp/keys_"$USER"_$dbid 2> /dev/null
+chmod 700 /tmp/keys_"$USER"_$dbid
+
+tmpdir=/tmp/keys_"$USER"_$dbid
+database_menu_pw="$tmpdir"/menu_password
+database="$tmpdir"/database
+
+if ! test -e "$database"; then
     database_password=$(rofi -dmenu -password -p "enter your database's master key")
     test -z "$database_password" && exit 1
 
     notify-send "trying to unlock... wait until this is over. if any error, close+open"
-    touch "/tmp/keys_menu_pw_$USER"
-    chmod 600 "/tmp/keys_menu_pw_$USER"
-    echo "$database_password" > "/tmp/keys_menu_pw_$USER"
-    keys open "/tmp/keys_menu_pw_$USER" || { 
+    touch "$database_menu_pw"
+    chmod 600 "$database_menu_pw"
+    echo -n "$database_password" > "$database_menu_pw"
+    keys open "$database_menu_pw" || { 
         notify-send "failure unlocking database, the password is wrong?"
         keys close
         exit 1
