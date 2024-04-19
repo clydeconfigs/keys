@@ -12,7 +12,7 @@
 menu=$1
 test -z $1 && exit 1
 
-main_menu=$(echo -e "try+open\nclose+open" | $menu -p "careful: this will display your logins! select any to continue" -lines 0 || exit 1)
+main_menu=$(echo -e "try+open\nclose+open" | $menu -p "careful: this will display your logins! select any to continue" -lines 0) || exit 1
 
 case $main_menu in
     "try+open")
@@ -38,14 +38,13 @@ if ! test -e "/tmp/key_database_$USER"; then
     }
 fi
 
-entry=$(keys list | $menu)
+entry=$(keys list | $menu) || exit 1
 
 kn=$(echo "$entry" | sed 's/\..*//')
 password=$(keys get $kn)
+rofi -e $password
 login=$(keys list -lt | grep -P "\b$kn\." | awk '{print $3}')
 totp=$(keys totp $kn)
-
-test "$password" == "argument should be a digit" && exit 1
 
 choice=$(echo -e "password\nlogin+password\nlogin\ntotp" | $menu) || exit 1
 
