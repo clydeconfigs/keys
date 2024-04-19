@@ -42,7 +42,6 @@ entry=$(keys list | $menu) || exit 1
 
 kn=$(echo "$entry" | sed 's/\..*//')
 password=$(keys get $kn)
-rofi -e $password
 login=$(keys list -lt | grep -P "\b$kn\." | awk '{print $3}')
 totp=$(keys totp $kn)
 
