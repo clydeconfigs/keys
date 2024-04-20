@@ -12,29 +12,30 @@ create() {
 	echo "title	username	password	totp	note" > "$database"
 	test -e "$KEYS_DIR" || mkdir "$KEYS_DIR"
 
-	echo "how strong do you want your scrypt KDF settings? ([a]/b/c/d)"
+	echo "how strong do you want your scrypt KDF settings? ($(tput bold)[a]$(tput sgr0)/b/c/d/e/f/0)"
 	echo "a) weak ~1 seconds / 0.5GB RAM (19/8/1)"
 	echo "b) medium ~2 seconds / 1GB RAM (20/8/1)"
 	echo "c) hard ~4 seconds / 2GB RAM (21/8/1)"
 	echo "d) pro ~8 seconds / 4GB RAM (22/8/1)"
 	echo "e) max ~16 seconds / 8GB RAM (23/8/1)"
+	echo "f) extreme ~32 seconds / 16GB RAM (24/8/1)"
+	echo "0) experimental (unsafe) 100 ms / 65MB RAM (16/8/1)"
 
 	read abcd
 
 	case $abcd in
-	    a)
-	        config="N=19\nr=8\np=1";;
-	    b)
-	        config="N=20\nr=8\np=1";;
-	    c)
-	        config="N=21\nr=8\np=1";;
-	    d)
-	        config="N=22\nr=8\np=1";;
-	    e)
-	        config="N=23\nr=8\np=1";;
-	    *)
-	        config="N=19\nr=8\np=1";;
+	    a)N=19;;
+	    b)N=20;;
+	    c)N=21;;
+	    d)N=22;;
+	    e)N=23;;
+	    f)N=24;;
+
+	  	0)N=16;;
+	    *)N=19;;
 	esac
+
+	config="N=$N\nr=8\np=1"
 	
 	echo -e $config > "$KEYS_DIR"/keys.config
 	echo -en "\nc=20" >> "$KEYS_DIR"/keys.config
@@ -49,7 +50,7 @@ create() {
 	git init
 	git add key_database keys.config
 	git commit -m "create database"
-	echo "created at "$KEYS_DIR"/key_database"		
+	echo "created at "$KEYS_DIR"/key_database"
 }
 update() {
 	open || { close; exit 1; }
@@ -114,7 +115,7 @@ open() {
 			cp "$KEYS_DIR"/key_database.bkup "$KEYS_DIR"/key_database
 			echo -e "\033[0;32mfound a backup without the original database... we restored it\033[0m"
 		else
-			echo ""$KEYS_DIR"/key_database does not exist"; exit 1;
+			echo ""$KEYS_DIR"/key_database does not exist. creating one..."; { keys create; exit; }
 		fi
 	}
 	
