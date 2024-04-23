@@ -24,7 +24,7 @@ case $main_menu in
 esac
 
 # this should be done in keys itself, but since it's not open yet, we have to do it ourselves
-dbid=$(echo "$KEYS_DIR" | cksum | cut -d" " -f 1)
+dbid=$(echo "$KEYS_DIR" | b2sum | cut -b1-16)
 mkdir /tmp/keys_"$USER"_$dbid 2> /dev/null
 chmod 700 /tmp/keys_"$USER"_$dbid
 

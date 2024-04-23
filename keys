@@ -5,6 +5,28 @@
 # keys, a work by clyde
 #
 
+new_master_key() {
+	echo -n "enter new master key: "
+	read -s newmasterkey
+	echo
+	echo -n "repeat it: "
+	read -s newmasterkey2 
+
+	[[ "$newmasterkey" == "$newmasterkey2" ]] || { echo "the keys don't match"; exit 1; }
+
+	test -e "$database_pw" || { echo; echo -e "\e[1;31mfatal error: no temporal password file found (possible MITM attack!)\e[0m"; exit 1; }
+
+	echo -n "$newmasterkey" | b2sum | awk '{print $1}' > "$database_pw"
+
+}
+input_pwd() {
+	echo -n "type your password: "
+	read -s pw
+	echo "checking the key..."
+	touch "$database_pw"
+	chmod 600 "$database_pw"
+	echo -n "$pw" | b2sum | awk '{print $1}' > "$database_pw"
+}
 create() {
 	test -e "$KEYS_DIR"/key_database && { echo ""$KEYS_DIR"/key_database already exists"; exit 1; }
 	touch "$database"
@@ -42,9 +64,8 @@ create() {
 	
 	source "$KEYS_DIR"/keys.config
 
-	until scrypt enc --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database; do
-		sleep 0.1
-	done
+	new_master_key
+	scrypt enc --passphrase file:"$database_pw" --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database
 	
 	cd "$KEYS_DIR"
 	git init
@@ -77,18 +98,8 @@ update() {
 changemasterkey() {
 	open || { close; exit 1; }
 
-	echo -n "enter new master key: "
-	read -s newmasterkey
-	echo
-	echo -n "repeat it: "
-	read -s newmasterkey2 
-
-	[[ "$newmasterkey" == "$newmasterkey2" ]] || { echo "the keys don't match"; exit 1; }
-
-	echo -n "$newmasterkey" > "$database_pw"
-
-	pw=$(cat "$database_pw")
-
+	new_master_key
+	
 	touch "/tmp/keys_$USER.lock"
 	chmod 600 "/tmp/keys_$USER.lock"
 	echo "doing changes to the database... important: do not delete or change any temporary files now"
@@ -125,7 +136,6 @@ open() {
 	chmod 600 "$database"
 	
 	if test -e "$database_pw"; then
-		pw=$(cat "$database_pw");
 		scrypt dec --passphrase file:"$database_pw" "$KEYS_DIR"/key_database "$database" || { 
 			echo "failure"; rm "$database_pw"; rm "$database"; exit 1; 
 		} 
@@ -133,12 +143,7 @@ open() {
 	fi
 	
 	if test -z "$1"; then
-		echo -n "type your password: "
-		read -s pw
-		echo "checking the key..."
-		touch "$database_pw"
-		chmod 600 "$database_pw"
-		echo -n "$pw" > "$database_pw"
+		input_pwd
 	else
 		touch "$database_pw"
 		chmod 600 "$database_pw"
@@ -214,7 +219,7 @@ add() {
 generate() {
 	open || { close; exit 1; }
 
-	test -z "$1" && { echo -e "\e[31mspecify the entry's name to generate: keys generate foo\e[0m"; exit 1; }
+	test -z "$1" && { echo -e "\e[31merror: specify the entry's name to generate: keys generate foo\e[0m"; exit 1; }
 	
 	title="$1"
 	password=$(cat /dev/urandom | tr -dc '[:graph:]' | head -c 20)
@@ -301,7 +306,7 @@ unlock() {
 	test -e "/tmp/keys_$USER.lock" && { echo "locked: wait until changes are done or delete /tmp/keys_$USER.lock if something unexpected happened"; exit 1; }
 }
 
-dbid=$(echo "$KEYS_DIR" | cksum | cut -d" " -f 1)
+dbid=$(echo "$KEYS_DIR" | b2sum | cut -b1-16)
 mkdir /tmp/keys_"$USER"_$dbid 2> /dev/null
 chmod 700 /tmp/keys_"$USER"_$dbid
 
@@ -318,6 +323,11 @@ else
 	# yes, this is probably dumb, but what option do i got?
 	
 	export KEYS_DIR=$(echo -n "$KEYS_DIR" | sed "s.~.$HOME.g")
+
+	if ! [[ "$KEYS_DIR" == /* ]]; then
+		export KEYS_DIR=$(echo -n "$HOME/$KEYS_DIR")
+	fi
+	
 	if [[ "$KEYS_DIR" == */ ]]; then
 		export KEYS_DIR=$(echo -n "$KEYS_DIR" | sed 's/.\{1\}$//')
 	fi
