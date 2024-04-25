@@ -51,11 +51,14 @@ gmail/john@gmail.com copied, clearing clipboard in 20
 
 display all your entries in a fancy way:
 
-```keys list -ln | sed 's./.\t.g' | column -t -s "$(printf '\t')"```
+```
+keys list -ln | sed 's./.\t.g' | column -t -s "$(printf '\t')"
+```
 
 find an entry by the contents of its password:
 
-```$ keys get cows
+```
+$ keys get cows
 gmail/palse68
 tall cows layout karen battle field
 ```
