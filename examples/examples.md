@@ -24,11 +24,11 @@ add a new entry:
 
 ```
 $ keys add
-type the new title: gmail
-type the new username [press enter for random]: john@gmail.com
-type the new password [press for random]:
-type the new TOTP key:
-type a note:
+type the new title: gmail⏎
+type the new username [press enter for random]: john@gmail.com⏎
+type the new password [press for random]:⏎
+type the new TOTP key:⏎
+type a note:⏎
 doing changes to the database... important: do not delete or change any temporary files now
 ```
 
@@ -51,4 +51,11 @@ gmail/john@gmail.com copied, clearing clipboard in 20
 
 display all your entries in a fancy way:
 
-```keys list -lt | column -t```
+```keys list -ln | sed 's./.\t.g' | column -t -s "$(printf '\t')"```
+
+find an entry by the contents of its password:
+
+```$ keys get cows
+gmail/palse68
+tall cows layout karen battle field
+```
