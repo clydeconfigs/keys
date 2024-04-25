@@ -11,10 +11,11 @@ new_master_key() {
 	echo
 	echo -n "repeat it: "
 	read -s newmasterkey2 
-
+	echo
+	
 	[[ "$newmasterkey" == "$newmasterkey2" ]] || { echo "the keys don't match"; exit 1; }
 
-	rm "$database_pw" && { echo; echo -e "\e[1;31merror: temporal password file found (possible MITM attack!) this may occur when deleting an existing database. if so, try again\e[0m"; exit 1; }
+	rm "$database_pw" 2> /dev/null && { echo; echo -e "\e[1;31merror: temporal password file found (possible MITM attack!) this may occur when deleting an existing database. if so, try again\e[0m"; exit 1; }
 	touch "$database_pw"
 	chmod 600 "$database_pw"
 	
@@ -67,14 +68,14 @@ create() {
 	source "$KEYS_DIR"/keys.config
 
 	new_master_key
-	scrypt enc --passphrase file:"$database_pw" --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database
+	scrypt enc --passphrase file:"$database_pw" --logN $N -r $r -p $p "$database" "$KEYS_DIR"/key_database 1> /dev/null
 	
 	cd "$KEYS_DIR"
-	git init
+	git init > /dev/null 2>&1
 	git config --local user.name "keys"
 	git config --local user.email ""
 	git add key_database keys.config
-	git commit -m "create database"
+	git commit -m "create database" 1> /dev/null
 	echo "created at "$KEYS_DIR"/key_database"
 }
 update() {

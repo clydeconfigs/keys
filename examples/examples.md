@@ -2,6 +2,24 @@
 
 ## example usage
 
+create a database:
+
+```
+how strong do you want your scrypt KDF settings? ([a]/b/c/d/e/f/0)
+a) weak ~1 seconds / 0.5GB RAM (19/8/1)
+b) medium ~2 seconds / 1GB RAM (20/8/1)
+c) hard ~4 seconds / 2GB RAM (21/8/1)
+d) pro ~8 seconds / 4GB RAM (22/8/1)
+e) max ~16 seconds / 8GB RAM (23/8/1)
+f) extreme ~32 seconds / 16GB RAM (24/8/1)
+0) experimental (unsafe) 100 ms / 65MB RAM (16/8/1)
+d⏎
+enter new master key:⏎
+repeat it:⏎
+created at /home/test/.key_database/key_database
+
+```
+
 add a new entry:
 
 ```
