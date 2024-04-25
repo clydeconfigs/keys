@@ -14,8 +14,10 @@ new_master_key() {
 
 	[[ "$newmasterkey" == "$newmasterkey2" ]] || { echo "the keys don't match"; exit 1; }
 
-	test -e "$database_pw" || { echo; echo -e "\e[1;31mfatal error: no temporal password file found (possible MITM attack!)\e[0m"; exit 1; }
-
+	rm "$database_pw" && { echo; echo -e "\e[1;31merror: temporal password file found (possible MITM attack!) this may occur when deleting an existing database. if so, try again\e[0m"; exit 1; }
+	touch "$database_pw"
+	chmod 600 "$database_pw"
+	
 	echo -n "$newmasterkey" | b2sum | awk '{print $1}' > "$database_pw"
 
 }
@@ -69,6 +71,8 @@ create() {
 	
 	cd "$KEYS_DIR"
 	git init
+	git config --local user.name "keys"
+	git config --local user.email ""
 	git add key_database keys.config
 	git commit -m "create database"
 	echo "created at "$KEYS_DIR"/key_database"
