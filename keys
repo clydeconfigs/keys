@@ -15,7 +15,9 @@ new_master_key() {
 	
 	[[ "$newmasterkey" == "$newmasterkey2" ]] || { echo "the keys don't match"; exit 1; }
 
-	rm "$database_pw" 2> /dev/null && { echo; echo -e "\e[1;31merror: temporal password file found (possible MITM attack!) this may occur when deleting an existing database. if so, try again\e[0m"; exit 1; }
+	# possible MITM attack here, if someone creates $database_pw before user does
+	# TO DO: check if $database_pw is owned by user...
+
 	touch "$database_pw"
 	chmod 600 "$database_pw"
 	
