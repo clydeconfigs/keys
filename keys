@@ -310,6 +310,34 @@ edit() {
 unlock() {
 	test -e "/tmp/keys_$USER.lock" && { echo "locked: wait until changes are done or delete /tmp/keys_$USER.lock if something unexpected happened"; exit 1; }
 }
+help() {
+	echo -e "
+ USAGE:
+ 
+ (be careful not displaying your logins to anyone when using list/tab/edit/get)
+ 
+ \e[1mcreate\e[0m
+  create a database \e[94m(interactive)\e[0m
+ \e[1madd\e[0m
+   add an entry \e[94m(interactive)\e[0m
+ \e[1mremove \e[3mID\e[0m\e[0m
+   remove an entry by its ID (removing by \e[3mCONTENT\e[0m is not secure)
+ \e[1medit\e[0m
+   edit the database (requires $EDITOR variable)
+ \e[1mget \e[3mID\e[0m\e[0m
+   get an entry by its ID
+ \e[1mlist [l/n/t]\e[0m
+   list all the entries (options mean: [login/notes/tab])
+ \e[1mtab\e[0m
+   list all the entries in a fancy way (similar to 'list -lnt')
+ \e[1mcopy \e[3mCONTENT\e[0m\e[0m
+  looks for an entry and copies it to the clipboard
+ \e[1mget \e[3mCONTENT\e[0m\e[0m
+  looks for an entry and prints it
+ \e[1mclose\e[0m
+   close the database
+"
+}
 
 dbid=$(echo "$KEYS_DIR" | b2sum | cut -b1-16)
 mkdir /tmp/keys_"$USER"_$dbid 2> /dev/null
@@ -370,7 +398,8 @@ case "$1" in
 		totp $2;;
 	"copy")
 		copy $2;;
+	"tab")
+		list lnt | column -t -s "$(printf '\t')";;
 	*)
-		echo "not a valid option (copy/get/create/open/close/list/add/remove/edit)"
-		echo "be careful not displaying your logins to anyone when using list/edit/get";;
+		help;;
 esac

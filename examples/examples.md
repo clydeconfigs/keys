@@ -1,5 +1,13 @@
 # keys, password manager 
 
+## dependencies:
+
+```
+scrypt: to encrypt the database
+git (recommended): to track the database's changes
+oath-toolkit (optional): for TOTP
+```
+
 ## example usage
 
 create a database:
@@ -52,7 +60,8 @@ gmail/john@gmail.com copied, clearing clipboard in 20
 display all your entries in a fancy way:
 
 ```
-keys list -ln | sed 's./.\t.g' | column -t -s "$(printf '\t')"
+keys list -lnt | column -t -s "$(printf '\t')"
+
 ```
 
 find an entry by the contents of its password:
