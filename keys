@@ -354,7 +354,6 @@ help() {
    generate a random username (example: yipota15)
  \e[1mpassword\e[0m
    generate a random password (example: j.^;+z@:?0WGH\4gmG%V)
-
 "
 }
 
