@@ -39,7 +39,7 @@ if ! test -e "$database"; then
     notify-send "trying to unlock... wait until this is over. if any error, close+open"
     touch "$database_menu_pw"
     chmod 600 "$database_menu_pw"
-    echo -n "$database_password" > "$database_menu_pw"
+    echo -n "$database_password" | b2sum | awk '{print $1}' > "$database_menu_pw"
     keys open "$database_menu_pw" || { 
         notify-send "failure unlocking database, the password is wrong?"
         keys close
