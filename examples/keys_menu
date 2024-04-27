@@ -54,7 +54,7 @@ password=$(keys get $kn)
 login=$(keys list -lt | grep -P "\b$kn\." | awk '{print $3}')
 totp=$(keys totp $kn)
 
-choice=$(echo -e "password\nlogin+password\nlogin\ntotp" | $menu) || exit 1
+choice=$(echo -e "login+password\npassword\nlogin\ntotp\nlogin[enter]password" | $menu) || exit 1
 
 {
 case $choice in
@@ -63,9 +63,22 @@ case $choice in
             char="${login:$i:1}"
             xdotool type "$char"
         done
-        sleep 0.01
+        sleep 0.05
         xdotool key Tab
-        sleep 0.01
+        sleep 0.05
+        for (( i=0; i<${#password}; i++ )); do
+            char="${password:$i:1}"
+            xdotool type "$char"
+        done
+        ;;
+    "login[enter]password")
+        for (( i=0; i<${#login}; i++ )); do
+            char="${login:$i:1}"
+            xdotool type "$char"
+        done
+        sleep 0.05
+        xdotool key Enter
+        sleep 1.1
         for (( i=0; i<${#password}; i++ )); do
             char="${password:$i:1}"
             xdotool type "$char"
