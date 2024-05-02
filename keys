@@ -297,7 +297,7 @@ copy() {
 		found="$(grep "$1" "$database" | head -n1)"
 		name=$(echo -e "$found" | awk -F '\t' '{print $1"/"$2}')
 		echo -e "$name copied, clearing clipboard in $c"
-		echo -e "$found" | awk -F '\t' '{print $3}' | xclip -sel c
+		echo -e "$found" | awk -F '\t' '{print $3}' | tr -d '\n' | xclip -sel c
 
 		{ 
 			sleep $c
