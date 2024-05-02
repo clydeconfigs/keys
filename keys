@@ -244,20 +244,28 @@ generate() {
 remove() {
 	open || { close; exit 1; }
 
+	test $1 = "0" && exit 1
+	
     regex='^[0-9]+$'
     if [[ $1 =~ $regex ]]; then
     	n=$(($1 + 1))
 		bkup=$(sed -n "$n"p $database)
 		name=$(sed -n "$n"p $database | awk -F $'\t' '{print $1" "$2}' | tr -d '\n')
-    	read -p "(important: press Ctrl+C to cancel) are you sure you want to delete '$name'?" || exit 1
-		chmod 600 "$tmp_backup"
-		echo "$bkup" >> "$tmp_backup"
-		echo "deleted entry '$name', backup in $tmp_backup"
-		sed -i "$n"d $database
+    	read -p "are you sure you want to delete '$name'? (y/n)" r
+		[[ $r =~ ^(Y|y|yes)$ ]] || { 
+			echo -e "\e[31mcanceled\e[0m"
+			exit 1
+		}
 	else
-		echo "argument should be a digit"
-		exit 1
+		echo -e "\e[31margument should be a digit\e[0m"
+		exit 1	
 	fi
+
+	touch "$tmp_backup" || exit 1
+	chmod 600 "$tmp_backup"
+	echo "$bkup" >> "$tmp_backup"
+	echo -e "\e[32mdeleted entry '$name', backup in $tmp_backup\e[0m"
+	sed -i "$n"d $database
 
 	update
 }
